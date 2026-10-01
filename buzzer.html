@@ -1,0 +1,442 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <title>Black &amp; Allies Jeopardy Buzzer</title>
+  <style>
+    :root {
+      --bg: #07060a;
+      --panel: #0d0b14;
+      --border: #3a2c00;
+      --gold: #f7c948;
+      --gold2: #ffdf6e;
+      --text: #fff7d6;
+      --muted: #e9d8a6;
+      --danger: #ff6b6b;
+      --ok: #7CFC98;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: radial-gradient(800px 600px at 50% 0%, #11102b 0%, var(--bg) 60%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    h1 { color: var(--gold2); margin: 0 0 6px; font-size: 1.6rem; }
+    .sub { color: var(--muted); font-size: .95rem; margin: 0 0 24px; }
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, #0b0a10 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      background: #0a0910;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+    }
+    input::placeholder { color: #665d40; }
+    .btn {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #1a1526 0%, #0e0b14 100%);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    .btn.ok { border-color: #5a4200; background: linear-gradient(180deg,#2a2100 0%,#141000 100%); color: var(--gold2); }
+
+
+    /* --- Buzzer button --- */
+    #buzzerBtn {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 6px solid #8b6a00;
+      background: radial-gradient(circle at 38% 32%, #ffea80 0%, #f7c948 40%, #c8920a 100%);
+      color: #1a1200;
+      font-size: 1.8rem;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: pointer;
+      box-shadow: 0 0 60px rgba(247,201,72,.55), 0 8px 32px rgba(0,0,0,.6);
+      transition: transform .08s ease, box-shadow .08s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0 auto;
+      position: relative;
+    }
+    #buzzerBtn:active, #buzzerBtn.pressed {
+      transform: scale(.92);
+      box-shadow: 0 0 30px rgba(247,201,72,.35), 0 2px 8px rgba(0,0,0,.6);
+    }
+    #buzzerBtn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+
+    #loginSection { display: block; }
+    #buzzerSection { display: none; flex-direction: column; align-items: center; gap: 20px; }
+
+
+    #statusMsg {
+      font-size: 1rem;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+    #statusMsg.ok { color: var(--ok); }
+    #statusMsg.err { color: var(--danger); }
+
+
+    #playerLabel { color: var(--gold2); font-size: 1.1rem; font-weight: 700; margin: 0; }
+    #questionInfo {
+      font-size: .95rem;
+      color: var(--muted);
+      min-height: 1.2em;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0a0910;
+      width: 100%;
+      max-width: 340px;
+    }
+    #answerArea { display:none; width:100%; max-width:340px; }
+    #answerArea input { margin-bottom:10px; text-align:center; }
+
+
+    /* Ripple flash overlay */
+    #buzzerFlash {
+      position: fixed; inset: 0;
+      background: rgba(247,201,72,0);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s ease-out;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      font-weight: 900;
+    }
+    #buzzerFlash .flash-label {
+      opacity: 0;
+      transform: scale(.4);
+      transition: opacity .18s ease, transform .18s ease;
+      color: var(--gold2);
+      text-shadow: 0 0 30px rgba(247,201,72,.9);
+    }
+  </style>
+</head>
+<body>
+  <div id="buzzerFlash"><span class="flash-label">BUZZ!</span></div>
+
+
+  <h1>Black &amp; Allies Jeopardy</h1>
+  <p class="sub">Join the game and hit the buzzer to answer!</p>
+  <p id="roomLabel" class="sub" style="color:var(--gold2);margin-top:-8px">Room: —</p>
+
+
+  <!-- Login -->
+  <div class="card" id="loginSection">
+    <input id="nameInput" placeholder="Enter your player name" autocomplete="off" spellcheck="false" />
+    <div id="loginError" style="color:var(--danger);font-size:.88rem;margin-bottom:10px;min-height:1.2em"></div>
+    <button class="btn ok" id="joinBtn">Join Game</button>
+  </div>
+
+
+  <!-- Buzzer -->
+  <div class="card" id="buzzerSection" style="display:none">
+    <p id="playerLabel">—</p>
+    <div id="questionInfo">Waiting for a question…</div>
+    <div style="margin:20px 0">
+      <button id="buzzerBtn" disabled>BUZZ!</button>
+    </div>
+    <div id="statusMsg"></div>
+    <div id="answerArea">
+      <input id="remoteAnswerInput" placeholder="Type your answer" autocomplete="off" spellcheck="false" aria-label="Your answer" />
+      <button class="btn ok" id="submitAnswerBtn">Submit Answer</button>
+      <div class="sub" style="margin:0">Capitalization does not matter.</div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn" id="leaveBtn" style="font-size:.85rem;padding:8px">Leave Game</button>
+    </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+  (() => {
+    const CHANNEL_NAME = "trivia-buzzer-channel";
+    const STORAGE_KEY  = "trivia-buzzer-state";
+    const bc = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL_NAME) : null;
+    const realtimeConfig = window.JEOPARDY_CONFIG || {};
+    const realtimeEnabled = !!(realtimeConfig.supabaseUrl && realtimeConfig.supabaseAnonKey && window.supabase);
+    const roomCode = (new URLSearchParams(location.search).get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+    let realtimeChannel = null;
+    let realtimeReady = false;
+    let outboundQueue = [];
+
+
+    const loginSection  = document.getElementById("loginSection");
+    const buzzerSection = document.getElementById("buzzerSection");
+    const nameInput     = document.getElementById("nameInput");
+    const loginError    = document.getElementById("loginError");
+    const joinBtn       = document.getElementById("joinBtn");
+    const leaveBtn      = document.getElementById("leaveBtn");
+    const buzzerBtn     = document.getElementById("buzzerBtn");
+    const playerLabel   = document.getElementById("playerLabel");
+    const questionInfo  = document.getElementById("questionInfo");
+    const statusMsg     = document.getElementById("statusMsg");
+    const answerArea    = document.getElementById("answerArea");
+    const remoteAnswerInput = document.getElementById("remoteAnswerInput");
+    const submitAnswerBtn = document.getElementById("submitAnswerBtn");
+    const buzzerFlash   = document.getElementById("buzzerFlash");
+    const flashLabel    = buzzerFlash.querySelector(".flash-label");
+    const roomLabel     = document.getElementById("roomLabel");
+    roomLabel.textContent = roomCode ? `Room: ${roomCode}` : "Room code missing";
+
+
+    let playerName = null;
+    let audioCtx = null;
+    function playBuzzSound() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      audioCtx = audioCtx || new Ctx();
+      const t = audioCtx.currentTime;
+      [392, 262].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "square"; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(.0001, t + i * .13);
+        gain.gain.exponentialRampToValueAtTime(.12, t + i * .13 + .01);
+        gain.gain.exponentialRampToValueAtTime(.0001, t + i * .13 + .16);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(t + i * .13); osc.stop(t + i * .13 + .18);
+      });
+    }
+
+
+    // ---- Flash animation ----
+    function triggerBuzzerFlash() {
+      buzzerFlash.style.background = "rgba(247,201,72,0.5)";
+      buzzerFlash.style.opacity = "1";
+      flashLabel.style.opacity = "1";
+      flashLabel.style.transform = "scale(1.2)";
+      setTimeout(() => {
+        buzzerFlash.style.opacity = "0";
+        flashLabel.style.opacity = "0";
+        flashLabel.style.transform = "scale(.4)";
+        setTimeout(() => { buzzerFlash.style.background = "rgba(247,201,72,0)"; }, 200);
+      }, 600);
+    }
+
+
+    // ---- Send message to host ----
+    function flushRealtimeQueue(){
+      if(!realtimeReady || !realtimeChannel) return;
+      const pending = outboundQueue.splice(0);
+      pending.forEach(msg => realtimeChannel.send({type:"broadcast",event:"message",payload:msg}));
+    }
+
+    function sendToHost(msg) {
+      if(realtimeEnabled && realtimeChannel){
+        if(!realtimeReady){ outboundQueue.push(msg); return; }
+        realtimeChannel.send({type:"broadcast",event:"message",payload:msg});
+        return;
+      }
+      if (bc) bc.postMessage(msg);
+      try { localStorage.setItem(STORAGE_KEY + "-to-host", JSON.stringify({ ...msg, _ts: Date.now() })); } catch(e) {}
+    }
+
+
+    // ---- Listen for messages from host ----
+    function handleHostMessage(data) {
+      if (!data || !data.type) return;
+
+
+      if (data.type === "question-start") {
+        questionInfo.textContent = data.category
+          ? `Category: ${data.category}  |  $${data.value}`
+          : "Question active!";
+        buzzerBtn.disabled = false;
+        statusMsg.textContent = "Tap the buzzer to answer!";
+        statusMsg.className = "";
+        answerArea.style.display = "none";
+        remoteAnswerInput.value = "";
+        submitAnswerBtn.disabled = false;
+      }
+
+
+      if (data.type === "question-end") {
+        buzzerBtn.disabled = true;
+        questionInfo.textContent = "Waiting for next question…";
+        statusMsg.textContent = "";
+        answerArea.style.display = "none";
+      }
+
+
+      if (data.type === "buzz-ack" && data.player === playerName) {
+        statusMsg.textContent = "✅ You buzzed in first! Answer now.";
+        statusMsg.className = "ok";
+        triggerBuzzerFlash();
+        answerArea.style.display = "block";
+        setTimeout(()=>remoteAnswerInput.focus(),100);
+      }
+
+
+      if (data.type === "buzz-denied" && data.player === playerName) {
+        statusMsg.textContent = "⚡ Someone else buzzed first.";
+        statusMsg.className = "err";
+        answerArea.style.display = "none";
+      }
+
+      if (data.type === "answer-received" && data.player === playerName) {
+        statusMsg.textContent = "✅ Answer submitted to the host.";
+        statusMsg.className = "ok";
+        answerArea.style.display = "none";
+      }
+
+      if (data.type === "answer-denied" && data.player === playerName) {
+        statusMsg.textContent = "Answer was not accepted. Wait for your next chance to buzz.";
+        statusMsg.className = "err";
+        answerArea.style.display = "none";
+      }
+
+
+      if (data.type === "join-ack" && data.player === playerName) {
+        if (data.registered) {
+          const displayName = data.canonicalPlayer || data.player;
+          statusMsg.textContent = data.added
+            ? `✅ ${displayName} was added to the game. You are ready to buzz.`
+            : `✅ Connected as ${displayName}. You are ready to buzz.`;
+          statusMsg.className = "ok";
+        } else {
+          statusMsg.textContent = "Enter a valid player name to join.";
+          statusMsg.className = "err";
+        }
+      }
+    }
+
+
+    if(realtimeEnabled && roomCode){
+      const client = window.supabase.createClient(realtimeConfig.supabaseUrl, realtimeConfig.supabaseAnonKey);
+      realtimeChannel = client.channel(`jeopardy-${roomCode}`, {config:{broadcast:{self:false}}});
+      realtimeChannel.on("broadcast", {event:"message"}, ({payload}) => handleHostMessage(payload));
+      realtimeChannel.subscribe(status => {
+        if(status === "SUBSCRIBED"){
+          realtimeReady = true;
+          flushRealtimeQueue();
+          if(!playerName) loginError.textContent = "";
+        }
+      });
+    } else if (bc) {
+      bc.addEventListener("message", (e) => handleHostMessage(e.data));
+    }
+
+    window.addEventListener("storage", (e) => {
+      if(realtimeEnabled) return;
+      if (e.key === STORAGE_KEY + "-to-buzzer") {
+        try { handleHostMessage(JSON.parse(e.newValue)); } catch(_) {}
+      }
+    });
+
+
+    // ---- Join ----
+    function join() {
+      const name = (nameInput.value || "").trim();
+      if (!name) { loginError.textContent = "Please enter your name."; return; }
+      if (!roomCode) { loginError.textContent = "This buzzer link is missing its room code. Scan the host QR code again."; return; }
+      if (!realtimeEnabled && location.protocol !== "file:") { loginError.textContent = "Online relay is not configured. The host must complete config.js first."; return; }
+      loginError.textContent = "";
+      playerName = name;
+
+
+      loginSection.style.display = "none";
+      buzzerSection.style.display = "flex";
+      playerLabel.textContent = name;
+      statusMsg.textContent = "Connecting…";
+
+
+      sendToHost({ type: "join", player: name });
+    }
+
+
+    joinBtn.addEventListener("click", join);
+    nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") join(); });
+
+
+    // ---- Leave ----
+    leaveBtn.addEventListener("click", () => {
+      sendToHost({ type: "leave", player: playerName });
+      playerName = null;
+      buzzerSection.style.display = "none";
+      loginSection.style.display = "block";
+      nameInput.value = "";
+      statusMsg.textContent = "";
+      questionInfo.textContent = "Waiting for a question…";
+      buzzerBtn.disabled = true;
+      answerArea.style.display = "none";
+    });
+
+
+    // ---- Buzz ----
+    buzzerBtn.addEventListener("click", () => {
+      if (!playerName || buzzerBtn.disabled) return;
+      playBuzzSound();
+      buzzerBtn.classList.add("pressed");
+      setTimeout(() => buzzerBtn.classList.remove("pressed"), 200);
+      sendToHost({ type: "buzz", player: playerName });
+      statusMsg.textContent = "Buzzed! Waiting for host…";
+      buzzerBtn.disabled = true;
+    });
+
+    function submitRemoteAnswer(){
+      const answer=(remoteAnswerInput.value||"").trim();
+      if(!playerName || !answer){
+        statusMsg.textContent="Please type an answer first.";
+        statusMsg.className="err";
+        return;
+      }
+      submitAnswerBtn.disabled=true;
+      sendToHost({type:"answer",player:playerName,answer});
+      statusMsg.textContent="Sending answer to host…";
+      statusMsg.className="";
+    }
+    submitAnswerBtn.addEventListener("click",submitRemoteAnswer);
+    remoteAnswerInput.addEventListener("keydown",e=>{if(e.key==="Enter") submitRemoteAnswer();});
+
+
+    // Touch events for better mobile responsiveness
+    buzzerBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      buzzerBtn.click();
+    }, { passive: false });
+
+
+  })();
+  </script>
+</body>
+</html>
