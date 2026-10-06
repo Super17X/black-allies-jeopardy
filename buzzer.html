@@ -163,13 +163,9 @@
       color: var(--gold2);
       text-shadow: 0 0 30px rgba(247,201,72,.9);
     }
-  
-    #connectionBadge{position:fixed;top:10px;right:10px;padding:6px 10px;border-radius:999px;background:#15131c;border:1px solid #3a2c00;font-size:.75rem;z-index:1000}
-    .screen-enter{animation:screenEnter .35s ease both}@keyframes screenEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-    #myStanding{font-weight:800;color:var(--gold2);margin:8px 0 14px}
-</style>
+  </style>
 </head>
-<body><div id="connectionBadge">● Connecting</div>
+<body>
   <div id="buzzerFlash"><span class="flash-label">BUZZ!</span></div>
 
 
@@ -188,7 +184,7 @@
 
   <!-- Buzzer -->
   <div class="card" id="buzzerSection" style="display:none">
-    <p id="playerLabel">—</p><div id="myStanding">Score: $0 • Rank: —</div>
+    <p id="playerLabel">—</p>
     <div id="controlBanner">In control: —</div>
     <div id="liveScoreboard" aria-live="polite">
       <div id="liveScoreboardTitle">Live Scoreboard</div>
@@ -269,8 +265,6 @@
     const liveScoreRows = document.getElementById("liveScoreRows");
     const liveScoreboardTitle = document.getElementById("liveScoreboardTitle");
     const finalWinnerMobile = document.getElementById("finalWinnerMobile");
-    const connectionBadge = document.getElementById("connectionBadge");
-    const myStanding = document.getElementById("myStanding");
     roomLabel.textContent = roomCode ? `Room: ${roomCode}` : "Room code missing";
 
 
@@ -357,8 +351,6 @@
       liveScoreRows.innerHTML=players.length?players.map(p=>
         `<div class="liveScoreRow${p.rank===1?" leader":""}"><span class="liveRank">${ordinalRank(p.rank)}</span><span class="liveName">${String(p.name||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}</span><span class="liveValue">$${Number(p.score)||0}</span></div>`
       ).join(""):"Waiting for scores…";
-      const me=players.find(p=>sameName(p.name,playerName));
-      if(me) myStanding.textContent=`Score: $${Number(me.score)||0} • Rank: ${ordinalRank(me.rank)}`;
       if(data?.controller && !isFinal) controlBanner.textContent=`In control: ${data.controller}`;
       if(isFinal && players.length){
         const winners=players.filter(p=>p.rank===1);
@@ -375,7 +367,6 @@
       if(data.type === "scoreboard-update"){ renderLiveScoreboard(data,false); }
       if(data.type === "final-scoreboard"){ renderLiveScoreboard(data,true); }
       if(data.type === "control-update"){ controlBanner.textContent=`In control: ${data.controller || "—"}`; }
-      if(data.type === "buzz-lock"){ buzzerBtn.disabled=true; if(!sameName(data.player,playerName)){statusMsg.textContent=`⚡ ${data.player} buzzed first.`;statusMsg.className="err";} }
       if(data.type === "selection-denied" && sameName(data.player,playerName)){ statusMsg.textContent=data.reason||"Selection not allowed."; statusMsg.className="err"; }
 
       if(data.type === "final-wager"){
@@ -468,10 +459,8 @@
       realtimeChannel.subscribe(status => {
         if(status === "SUBSCRIBED"){
           realtimeReady = true;
-          connectionBadge.textContent="● Connected"; connectionBadge.style.color="var(--ok)";
           flushRealtimeQueue();
           if(!playerName) loginError.textContent = "";
-          if(playerName) sendToHost({type:"join",player:playerName});
         }
       });
     } else if (bc) {
@@ -494,12 +483,10 @@
       if (!realtimeEnabled && location.protocol !== "file:") { loginError.textContent = "Online relay is not configured. The host must complete config.js first."; return; }
       loginError.textContent = "";
       playerName = name;
-      try{localStorage.setItem(`jeopardy-player-${roomCode}`,name)}catch(_){}
 
 
       loginSection.style.display = "none";
       buzzerSection.style.display = "flex";
-      buzzerSection.classList.add("screen-enter");
       playerLabel.textContent = name;
       statusMsg.textContent = "Connecting…";
 
@@ -515,7 +502,6 @@
     // ---- Leave ----
     leaveBtn.addEventListener("click", () => {
       sendToHost({ type: "leave", player: playerName });
-      try{localStorage.removeItem(`jeopardy-player-${roomCode}`)}catch(_){}
       playerName = null;
       buzzerSection.style.display = "none";
       loginSection.style.display = "block";
@@ -563,11 +549,6 @@
       sendToHost({type:"final-answer-submit",player:playerName,answer:String(finalAnswerInput.value||"").trim()}); finalAnswerBtn.disabled=true; finalStatusMobile.textContent="Sending final answer…";
     });
     finalAnswerInput.addEventListener("keydown",e=>{if(e.key==="Enter") finalAnswerBtn.click();});
-
-    // Restore contestant identity after an accidental refresh/reconnect.
-    try{const remembered=localStorage.getItem(`jeopardy-player-${roomCode}`);if(remembered){nameInput.value=remembered;setTimeout(join,120)}}catch(_){}
-    window.addEventListener("offline",()=>{connectionBadge.textContent="● Offline";connectionBadge.style.color="var(--danger)"});
-    window.addEventListener("online",()=>{connectionBadge.textContent="● Reconnecting…";connectionBadge.style.color="var(--gold2)";if(playerName)sendToHost({type:"join",player:playerName})});
 
     // Touch events for better mobile responsiveness
     buzzerBtn.addEventListener("touchstart", (e) => {

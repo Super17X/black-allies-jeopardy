@@ -306,44 +306,9 @@
     }
     @media (max-width:700px){#leaderboardTicker{height:52px}#leaderboardTicker .tickerLabel{padding:0 10px;font-size:.72rem}#leaderboardTicker .tickerTrack{justify-content:flex-start;gap:20px;padding:0 14px}#leaderboardTicker .tickerPlayer{font-size:.9rem}}
     @media (prefers-reduced-motion:reduce){.page-enter{animation:none}}
-
-    /* ===== Premiere Mode enhancements ===== */
-    #premiereIntro{position:fixed;inset:0;z-index:5000;background:radial-gradient(circle at 50% 35%,#121744,#05040a 68%);display:flex;align-items:center;justify-content:center;text-align:center;transition:opacity .6s ease,visibility .6s ease}
-    #premiereIntro.hidden{opacity:0;visibility:hidden;pointer-events:none}
-    .premiere-logo{font-size:clamp(2.7rem,8vw,7rem);font-weight:1000;color:var(--gold2);text-shadow:0 0 40px rgba(247,201,72,.38);animation:logoRise .8s cubic-bezier(.2,.8,.2,1)}
-    @keyframes logoRise{from{opacity:0;transform:translateY(30px) scale(.9)}to{opacity:1;transform:none}}
-    #gameCountdown{position:fixed;inset:0;z-index:4800;background:rgba(3,3,10,.92);display:none;align-items:center;justify-content:center;font-size:clamp(6rem,25vw,18rem);font-weight:1000;color:var(--gold2);text-shadow:0 0 60px rgba(247,201,72,.6)}
-    #gameCountdown.show{display:flex;animation:countPop .7s ease both}@keyframes countPop{0%{transform:scale(.5);opacity:0}45%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
-    #hostDrawer{position:fixed;right:12px;top:12px;z-index:3500;width:min(360px,92vw);background:rgba(8,7,14,.97);border:1px solid var(--gold);border-radius:16px;padding:12px;box-shadow:0 18px 55px #000;transform:translateX(calc(100% + 24px));transition:transform .25s ease}
-    #hostDrawer.open{transform:none}.host-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.host-grid .btn{margin:0}.host-wide{grid-column:1/-1}
-    #hostFab{position:fixed;right:16px;top:16px;z-index:3400;border-radius:999px}
-    #systemCheckModal{position:fixed;inset:0;z-index:4600;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:20px}#systemCheckModal.show{display:flex}.diag-card{width:min(620px,96vw);max-height:85vh;overflow:auto}
-    .diag-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(247,201,72,.14)}
-    #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(30px);z-index:4700;background:#12101b;border:1px solid var(--gold);border-radius:999px;padding:10px 18px;opacity:0;transition:.25s;pointer-events:none}#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    #achievementOverlay{position:fixed;inset:0;z-index:4300;display:none;align-items:center;justify-content:center;pointer-events:none;background:rgba(0,0,0,.35)}#achievementOverlay.show{display:flex}.achievement-card{background:linear-gradient(180deg,#211700,#0d0b14);border:2px solid var(--gold2);border-radius:22px;padding:28px 38px;text-align:center;font-size:clamp(1.3rem,4vw,2.4rem);font-weight:900;box-shadow:0 0 80px rgba(247,201,72,.35);animation:countPop .45s ease}
-    .timer-danger{color:#ff6b6b!important;animation:pulseTimer .65s infinite alternate}@keyframes pulseTimer{to{transform:scale(1.08)}}
-    body.presentation-mode #hostFab,body.presentation-mode #hostDrawer,body.presentation-mode .host-only{display:none!important}
-    .resume-banner{border:1px solid var(--gold);background:rgba(247,201,72,.08);border-radius:12px;padding:10px;margin:10px 0}
-    @media(max-width:700px){#hostDrawer{top:8px;right:8px}.premiere-logo{padding:0 16px}}
   </style>
 </head>
 <body>
-  <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
-  <div id="gameCountdown"></div>
-  <div id="toast"></div>
-  <div id="achievementOverlay"><div class="achievement-card" id="achievementCard"></div></div>
-  <button id="hostFab" class="btn">🎤 Host Controls</button>
-  <aside id="hostDrawer" aria-label="Host Control Center"><div class="row" style="justify-content:space-between"><strong style="color:var(--gold2)">🎤 HOST CONTROL CENTER</strong><button id="closeHostDrawer" class="btn">✕</button></div><div class="host-grid">
-    <button class="btn ok" data-host-action="correct">✓ Correct</button><button class="btn warn" data-host-action="wrong">✕ Wrong</button>
-    <button class="btn" data-host-action="pass">Pass</button><button class="btn" data-host-action="pause">Pause / Resume</button>
-    <button class="btn" data-host-action="reveal">Reveal Answer</button><button class="btn" data-host-action="board">Return to Board</button>
-    <button class="btn" id="undoBtn">↶ Undo Last Action</button><button class="btn" id="presentationBtn">📺 Presentation Mode</button>
-    <button class="btn" id="fullscreenBtn">⛶ Full Screen</button><button class="btn" id="muteAllBtn">🔇 Mute / Unmute</button>
-    <button class="btn host-wide" id="diagnosticsBtn">🧪 Pre-Game System Check</button>
-    <button class="btn warn host-wide" id="hostSkipFinalBtn">⏭ Skip to Final Jeopardy</button>
-  </div></aside>
-  <div id="systemCheckModal"><div class="card diag-card"><div class="row" style="justify-content:space-between"><h2 style="margin:0;color:var(--gold2)">Pre-Game System Check</h2><button id="closeDiagnostics" class="btn">Close</button></div><div id="diagnosticRows"></div></div></div>
-
   <!-- Local hip-hop question music is loaded from assets/jeopardy-hip-hop-beat.mp3 -->
   <!-- Buzz-in flash popup -->
   <div id="buzzFlashOverlay"><span id="buzzFlashLabel">BUZZ!</span></div>
@@ -481,7 +446,7 @@
 
       <label for="volume" class="mono tiny">Volume:</label>
       <input id="volume" type="number" min="0" max="1" step="0.05" value="0.25" style="width:90px" aria-label="Volume (0 to 1)" />
-      <button id="musicToggleBtn" class="btn alt" type="button">🔊 Landing Music: On</button>
+      <button id="musicToggleBtn" class="btn alt" type="button">♫ Start Game Music</button>
     </div>
 
 
@@ -1142,20 +1107,11 @@
     const buzzSound = new Audio("assets/metal_gear_solid.mp3");
     const joinSound = new Audio("assets/mario_coin.mp3");
     const dailyDoubleSound = new Audio("assets/funcooker.mp3");
-    const passSound = new Audio("assets/allow_me_to_retort.mp3");
-    const streakSound = new Audio("assets/avengers_war.mp3");
-    const timeOutSound = new Audio("assets/lose_street_fighter.mp3");
-    const whoopsieSound = new Audio("assets/whoopsie_2.mp3");
-    const landingMusic = new Audio("assets/wii_shop_music.mp3");
-    landingMusic.preload = "auto";
-    landingMusic.loop = true;
-    let landingMusicEnabled = true;
-    const correctStreaks = new Map();
-    [moneySound, stealSound, rizzSound, boomSound, buzzSound, joinSound, dailyDoubleSound, passSound, streakSound, timeOutSound, whoopsieSound].forEach(s => { s.preload = "auto"; });
+    [moneySound, stealSound, rizzSound, boomSound, buzzSound, joinSound, dailyDoubleSound].forEach(s => { s.preload = "auto"; });
 
     function playResultSound(sound){
       if (soundModeSel.value === "off") return;
-      [moneySound, stealSound, rizzSound, boomSound, buzzSound, joinSound, dailyDoubleSound, passSound, streakSound, timeOutSound, whoopsieSound].forEach(s => {
+      [moneySound, stealSound, rizzSound, boomSound, buzzSound, joinSound, dailyDoubleSound].forEach(s => {
         if (s !== sound) { s.pause(); s.currentTime = 0; }
       });
       sound.volume = Math.max(0, Math.min(1, Number(volumeInput.value || 0.25)));
@@ -1170,29 +1126,6 @@
     function playBuzzSound(){ playResultSound(buzzSound); }
     function playJoinSound(){ playResultSound(joinSound); }
     function playDailyDoubleSound(){ playResultSound(dailyDoubleSound); }
-    function playPassSound(){ playResultSound(passSound); }
-    function playStreakSound(){ playResultSound(streakSound); }
-    function playTimeOutSound(){ playResultSound(timeOutSound); }
-    function playWhoopsieSound(){ playResultSound(whoopsieSound); }
-
-    function syncLandingMusicVolume(){ landingMusic.volume = Math.max(0, Math.min(1, Number(volumeInput.value || 0.25))); }
-    function updateLandingMusicButton(){
-      const btn=$("musicToggleBtn");
-      if(btn) btn.textContent = landingMusicEnabled ? "🔊 Landing Music: On" : "🔇 Landing Music: Off";
-    }
-    function startLandingMusic(){
-      if(!landingMusicEnabled || lobbyPane.style.display === "none" || soundModeSel.value === "off") return;
-      syncLandingMusicVolume();
-      landingMusic.play().catch(()=>{});
-    }
-    function stopLandingMusic(){ landingMusic.pause(); landingMusic.currentTime=0; }
-    function toggleLandingMusic(){
-      landingMusicEnabled=!landingMusicEnabled;
-      if(landingMusicEnabled) startLandingMusic(); else stopLandingMusic();
-      updateLandingMusicButton();
-    }
-    window.addEventListener("load", ()=>setTimeout(startLandingMusic,180));
-    document.addEventListener("pointerdown", ()=>{ if(landingMusicEnabled && lobbyPane.style.display !== "none" && landingMusic.paused) startLandingMusic(); }, {once:true});
 
     function syncQuestionBeatVolume(){ questionBeat.volume = Math.max(0, Math.min(1, Number(volumeInput.value || 0.25))); }
     function startQuestionBeat(){
@@ -1269,7 +1202,8 @@
     }
     function updateMusicButtons(){
       const playing=!!audio.musicTimer;
-      const top=$("musicToggleTopBtn");
+      const lobby=$("musicToggleBtn"), top=$("musicToggleTopBtn");
+      if(lobby){ lobby.textContent=playing ? "■ Stop Game Music" : "♫ Start Game Music"; lobby.classList.toggle("music-active",playing); }
       if(top){ top.textContent=playing ? "■ Stop Music" : "♫ Music"; top.classList.toggle("music-active",playing); }
     }
     function startGameMusic(){
@@ -1292,10 +1226,8 @@
       };
       playBeat(); audio.musicTimer=setInterval(playBeat,300); updateMusicButtons();
     }
-    $("musicToggleBtn").addEventListener("click",toggleLandingMusic);
+    $("musicToggleBtn").addEventListener("click",toggleGameMusic);
     $("musicToggleTopBtn").addEventListener("click",toggleGameMusic);
-    volumeInput.addEventListener("change", ()=>{ syncLandingMusicVolume(); syncQuestionBeatVolume(); });
-    soundModeSel.addEventListener("change", ()=>{ if(soundModeSel.value === "off") stopLandingMusic(); else startLandingMusic(); });
     buzzerBtn.addEventListener("click", sfxPriceIsRightBuzzer);
 
 
@@ -1435,7 +1367,6 @@
         return;
       }
       clearLobbyError();
-      stopLandingMusic();
       lobbyPane.style.display="none";
       waitingRoomPane.style.display="block";
       // Fixed overlay is already centered in the viewport; do not scroll the page to it.
@@ -1488,7 +1419,6 @@
       waitingRoomPane.style.display="none";
       lobbyPane.style.display="block";
       presentView(lobbyPane);
-      startLandingMusic();
     }
 
 
@@ -1679,7 +1609,6 @@
       roundLabel.textContent = String(state.round);
       renderLeaderboardTicker();
       broadcastScoreboard(false);
-      premiereSave();
     }
 
     function renderLeaderboardTicker(){
@@ -1698,7 +1627,7 @@
     // -----------------------------
     // Game start
     // -----------------------------
-    function beginGameNow(){
+    function beginGame(){
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId = null;
 
@@ -1717,8 +1646,6 @@
 
 
       state.players.forEach(p=>p.score=0);
-      correctStreaks.clear();
-      state.players.forEach(p=>correctStreaks.set(p.name,0));
 
 
       try { state.board = buildBoard(cfg); }
@@ -1745,17 +1672,6 @@
       renderBoard();
       startGameClock();
       setTimeout(broadcastBoardState,150);
-      premiereSave();
-    }
-
-    let gameStartSequenceRunning=false;
-    function beginGame(){
-      if(gameStartSequenceRunning) return;
-      gameStartSequenceRunning=true;
-      const overlay=$("gameCountdown");
-      let steps=["3","2","1","LET’S PLAY!"]; let i=0;
-      const tick=()=>{ overlay.textContent=steps[i]; overlay.classList.remove("show"); void overlay.offsetWidth; overlay.classList.add("show"); i++; if(i<steps.length) setTimeout(tick,720); else setTimeout(()=>{overlay.classList.remove("show"); overlay.style.display="none"; gameStartSequenceRunning=false; beginGameNow();},720); };
-      overlay.style.display="flex"; tick();
     }
 
     function formatClock(seconds){
@@ -1908,7 +1824,6 @@
         if (state.timer.paused) return;
         state.timer.remaining -= 1;
         timerEl.textContent = `${state.timer.remaining}s`;
-        timerEl.classList.toggle("timer-danger", state.timer.remaining <= 5);
 
 
         if (state.timer.remaining <= 0){
@@ -1930,8 +1845,6 @@
           const [cat,rowStr] = state.activeKey.split("::");
           const clue = state.board.clueFor(cat,Number(rowStr));
           sfxTimesUp();
-          playTimeOutSound();
-          correctStreaks.set(state.players[state.controlIdx].name, 0);
           continueAfterMiss(clue,"Time expired.");
         }
       }, 1000);
@@ -1941,7 +1854,6 @@
       state.timer.id=null;
       state.timer.paused=false;
       timerEl.textContent="—";
-      timerEl.classList.remove("timer-danger");
       updateQuestionPauseButton();
     }
 
@@ -2016,22 +1928,12 @@
       answerInput.focus();
       startTimer(Number(stealSecondsInput.value||7),"steal",()=>{
         sfxTimesUp();
-        playTimeOutSound();
-        correctStreaks.set(state.players[state.controlIdx].name, 0);
         continueAfterMiss(clue,"Time expired.");
       });
     }
 
-    const premiereStats={correct:new Map(),wrong:new Map(),steals:new Map(),buzzes:new Map(),maxStreak:new Map(),dailyDoubleWins:new Map()};
-    const undoStack=[];
-    function pushUndo(label){
-      undoStack.push({label,scores:state.players.map(p=>p.score),controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,clueAttempts:state.clueAttempts});
-      if(undoStack.length>20) undoStack.shift();
-    }
-    function statInc(map,name,n=1){map.set(name,(map.get(name)||0)+n)}
     function handleSubmit(){
       if (!state.activeKey) return;
-      pushUndo("Answer result");
       stopQuestionBeat();
       const [cat,rowStr] = state.activeKey.split("::");
       const row = Number(rowStr);
@@ -2051,21 +1953,13 @@
 
       if (correct){
         sfxCorrect();
-        const currentPlayer = state.players[state.controlIdx];
-        const nextStreak = (correctStreaks.get(currentPlayer.name) || 0) + 1;
-        correctStreaks.set(currentPlayer.name, nextStreak);
-        statInc(premiereStats.correct,currentPlayer.name);
-        premiereStats.maxStreak.set(currentPlayer.name,Math.max(premiereStats.maxStreak.get(currentPlayer.name)||0,nextStreak));
-        if(state.clueAttempts>0) statInc(premiereStats.steals,currentPlayer.name);
-        if(isDD) statInc(premiereStats.dailyDoubleWins,currentPlayer.name);
         if (state.clueAttempts > 0) {
-          playWhoopsieSound();
+          playBoomSound();
           feedback.textContent="STEAL! Correct!";
         } else {
           playMoneySound();
           feedback.textContent="Correct!";
         }
-        if (nextStreak === 3) setTimeout(playStreakSound, 500);
         markUsed();
         state.players[state.controlIdx].score += value;
         closeClue();
@@ -2074,8 +1968,6 @@
 
 
       sfxWrong();
-      statInc(premiereStats.wrong,state.players[state.controlIdx].name);
-      correctStreaks.set(state.players[state.controlIdx].name, 0);
       if (state.clueAttempts > 0) {
         playStealSound();
       } else {
@@ -2093,7 +1985,7 @@
       const clue = state.board.clueFor(cat,row);
 
 
-      playPassSound();
+      sfxTimesUp();
       continueAfterMiss(clue,"Passed.");
     }
 
@@ -2176,12 +2068,6 @@
       startFinalTimer();
     }
 
-
-    const skipFinalBtn = $("skipFinalBtn");
-    if(skipFinalBtn) skipFinalBtn.addEventListener("click", ()=>{
-      if(state.activeKey){ feedback.textContent="Close the active clue before skipping to Final Jeopardy."; return; }
-      if(confirm("Skip the remaining board and go directly to Final Jeopardy?")) startFinalJeopardy();
-    });
 
     function renderFinalUI(){
       finalStepEl.textContent = state.final.step;
@@ -2317,11 +2203,7 @@
         `<div class="spacer"></div>` +
         `<div class="mono tiny">${lines.join("<br/>")}</div>`;
 
-      const awardTop=(map)=>{const arr=[...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));return arr[0]&&arr[0][1]>0?`${escapeHtml(arr[0][0])} (${arr[0][1]})`:"—"};
-      $("summaryText").innerHTML += `<div class="spacer"></div><h3 style="color:var(--gold2)">Game Awards</h3><div class="mono tiny">🔥 Hot Streak: ${awardTop(premiereStats.maxStreak)} &nbsp; • &nbsp; ⚡ Fastest Finger: ${awardTop(premiereStats.buzzes)} &nbsp; • &nbsp; 🏴‍☠️ Master Thief: ${awardTop(premiereStats.steals)} &nbsp; • &nbsp; 💰 Daily Double: ${awardTop(premiereStats.dailyDoubleWins)}</div>`;
-      showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
       broadcastToBuzzers({type:"final-results",accepted:finalJeopardy.answers[0], ...scoreboardPayload(true)});
-      localStorage.removeItem("black-allies-jeopardy-premiere-state");
     }
 
 
@@ -2607,8 +2489,6 @@
           return;
         }
         firstBuzzer = registration.player;
-        statInc(premiereStats.buzzes,registration.player);
-        broadcastToBuzzers({type:"buzz-lock",player:registration.player});
         broadcastToBuzzers({ type: "buzz-ack", player: data.player });
         addBuzzerLog(`🔔 ${registration.player} BUZZED IN!`);
         buzzStatusEl.textContent = `🔔 ${registration.player} buzzed in!`;
@@ -2729,35 +2609,6 @@
     renderLeaderboardTicker();
     setPrivacy(false);
     setAudioFromUI();
-
-
-    // ===== Premiere controller, diagnostics, recovery, and shortcuts =====
-    let mutedByHost=false;
-    function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
-    function showAchievement(html,ms=2200){const o=$("achievementOverlay");$("achievementCard").innerHTML=html;o.classList.add("show");setTimeout(()=>o.classList.remove("show"),ms)}
-    function premiereSave(){
-      try{if(!state.players.length)return;localStorage.setItem("black-allies-jeopardy-premiere-state",JSON.stringify({ts:Date.now(),players:state.players.map(p=>({name:p.name,score:p.score})),controlIdx:state.controlIdx,used:[...state.used],round:state.round,finalStep:state.final?.step||"off"}))}catch(_){}
-    }
-    function offerRecovery(){
-      try{const raw=localStorage.getItem("black-allies-jeopardy-premiere-state");if(!raw)return;const d=JSON.parse(raw);if(!d.players?.length||Date.now()-d.ts>86400000)return;const b=document.createElement("div");b.className="resume-banner";b.innerHTML=`<strong>Game in progress found</strong> — ${d.players.length} players. <button class="btn ok" id="resumePremiere">Restore scores</button> <button class="btn" id="dismissPremiere">Dismiss</button>`;lobbyPane.prepend(b);$("resumePremiere").onclick=()=>{state.players=d.players;state.controlIdx=Math.min(d.controlIdx||0,state.players.length-1);state.used=new Set(d.used||[]);renderLobbyList();renderScoreboard();b.remove();toast("Previous scores restored");};$("dismissPremiere").onclick=()=>{localStorage.removeItem("black-allies-jeopardy-premiere-state");b.remove();};}catch(_){}
-    }
-    function runDiagnostics(){
-      const assets=["assets/black-excellence-background.webp","assets/jeopardy-hip-hop-beat.mp3","assets/money_sound_effect.mp3","assets/metal_gear_solid.mp3","assets/mario_coin.mp3","assets/funcooker.mp3"];
-      const rows=[['Supabase configured',realtimeEnabled],['Realtime connected',!realtimeEnabled||realtimeReady],['Players connected',state.players.length>0],['QR room code',!!roomCode],['Browser audio',!!window.Audio]];
-      Promise.all(assets.map(src=>fetch(src,{method:'HEAD'}).then(r=>[src,r.ok]).catch(()=>[src,false]))).then(found=>{const all=rows.concat(found.map(([a,ok])=>[a,ok]));$("diagnosticRows").innerHTML=all.map(([n,ok])=>`<div class="diag-row"><span>${escapeHtml(n)}</span><strong style="color:${ok?'var(--ok)':'var(--danger)'}">${ok?'✓ READY':'✕ CHECK'}</strong></div>`).join('');});
-      $("systemCheckModal").classList.add("show");
-    }
-    function undoLast(){const u=undoStack.pop();if(!u)return toast("Nothing to undo");u.scores.forEach((v,i)=>{if(state.players[i])state.players[i].score=v});state.controlIdx=u.controlIdx;state.used=new Set(u.used);renderScoreboard();renderBoard();broadcastScoreboard(false);broadcastBoardState();toast(`Undid: ${u.label}`)}
-    $("hostFab").onclick=()=>$("hostDrawer").classList.toggle("open");$("closeHostDrawer").onclick=()=>$("hostDrawer").classList.remove("open");$("undoBtn").onclick=undoLast;
-    $("presentationBtn").onclick=()=>{document.body.classList.toggle("presentation-mode");toast(document.body.classList.contains("presentation-mode")?"Presentation mode on — press Esc for host controls":"Presentation mode off")};
-    $("fullscreenBtn").onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});
-    $("muteAllBtn").onclick=()=>{mutedByHost=!mutedByHost;soundModeSel.value=mutedByHost?'off':'on';soundModeSel.dispatchEvent(new Event('change'));toast(mutedByHost?'Audio muted':'Audio enabled')};
-    $("diagnosticsBtn").onclick=runDiagnostics;$("closeDiagnostics").onclick=()=>$("systemCheckModal").classList.remove("show");
-    $("hostSkipFinalBtn").onclick=()=>{if(state.activeKey)return toast("Close the active clue first");if(confirm("Skip to Final Jeopardy?"))startFinalJeopardy()};
-    document.querySelectorAll('[data-host-action]').forEach(b=>b.onclick=()=>{const a=b.dataset.hostAction;if(a==='correct'){if(state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}}else if(a==='wrong')handleSubmit();else if(a==='pass')handlePass();else if(a==='pause')toggleQuestionTimerPause();else if(a==='reveal'){if(state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}}else if(a==='board'&&state.activeKey)closeClue();});
-    document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){document.body.classList.remove('presentation-mode');$("hostDrawer").classList.remove('open')}if(k===' '){e.preventDefault();toggleQuestionTimerPause()}if(k==='c'&&state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}if(k==='x'&&state.activeKey)handleSubmit();if(k==='p'&&state.activeKey)handlePass();if(k==='r'&&state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}if(k==='f')document.documentElement.requestFullscreen?.().catch(()=>{});if(k==='m')$("muteAllBtn").click();if(k==='q')openBuzzerPanel?.();});
-    $("enterPremiereBtn").onclick=()=>{$("premiereIntro").classList.add("hidden");startLandingMusic();setTimeout(()=>presentView(lobbyPane),300)};
-    setTimeout(offerRecovery,350);
   })();
   </script>
 
