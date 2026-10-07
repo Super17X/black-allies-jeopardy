@@ -423,7 +423,20 @@
         if(status === "SUBSCRIBED"){
           realtimeReady = true;
           flushRealtimeQueue();
-          if(!playerName) loginError.textContent = "";
+          if(!playerName) {
+            loginError.textContent = "";
+          } else if (statusMsg.textContent === "Connecting to game room…") {
+            statusMsg.textContent = `Connected to room ${roomCode}. Waiting for host confirmation…`;
+            statusMsg.className = "";
+          }
+        } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
+          realtimeReady = false;
+          if(playerName){
+            statusMsg.textContent = `⚠️ Could not connect to room ${roomCode}. Return to the host screen and scan the current QR code.`;
+            statusMsg.className = "err";
+          } else {
+            loginError.textContent = `Could not connect to room ${roomCode}. Scan the current host QR code again.`;
+          }
         }
       });
     } else if (bc) {
@@ -451,10 +464,25 @@
       loginSection.style.display = "none";
       buzzerSection.style.display = "flex";
       playerLabel.textContent = name;
-      statusMsg.textContent = "Connecting…";
-
+      statusMsg.textContent = realtimeReady ? "Joining game…" : "Connecting to game room…";
+      statusMsg.className = "";
 
       sendToHost({ type: "join", player: name });
+
+      // A stale QR/link can point at a valid Supabase channel that has no host.
+      // Do not leave the player stuck on "Connecting…" forever.
+      const joinRoom = roomCode;
+      const joinName = name;
+      setTimeout(() => {
+        if (playerName !== joinName) return;
+        const connectedText = String(statusMsg.textContent || "");
+        if (/added to the game|connected as/i.test(connectedText)) return;
+        statusMsg.textContent =
+          `⚠️ No host responded in room ${joinRoom}. This link may be from an old game. Return to the current host screen and scan its latest QR code.`;
+        statusMsg.className = "err";
+        buzzerBtn.disabled = true;
+        answerArea.style.display = "none";
+      }, 8000);
     }
 
 
