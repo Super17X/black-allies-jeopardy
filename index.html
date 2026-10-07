@@ -191,12 +191,13 @@
       margin-bottom:12px;width:100%;text-align:left;
     }
     #buzzerQr{
-      width:min(360px,82vw);aspect-ratio:1/1;
+      width:min(440px,88vw);aspect-ratio:1/1;
       margin:14px auto;display:flex;align-items:center;justify-content:center;
-      box-sizing:border-box;background:#fff;padding:16px;
+      box-sizing:border-box;background:#fff;padding:0;
       border:0;border-radius:0;overflow:hidden;
+      image-rendering:pixelated;
     }
-    #buzzerQr img{width:100%;height:100%;display:block;object-fit:contain;background:#fff}
+    #buzzerQr canvas{width:100%;height:100%;display:block;background:#fff;image-rendering:pixelated}
     #buzzerLink{cursor:pointer}
     #buzzerLog{
       max-height:120px;overflow-y:auto;margin-top:10px;
@@ -2431,48 +2432,49 @@
       try {
         const parsed = new URL(finalUrl);
         const isSameOrigin = parsed.origin === window.location.origin;
-        const roomFromShortJoin = normalizeRoomCode(parsed.searchParams.get("r"));
-        const roomFromBuzzer = normalizeRoomCode(parsed.searchParams.get("room"));
-        const isShortJoin = parsed.pathname.endsWith("/j.html") && roomFromShortJoin === roomCode;
-        const isDirectBuzzer = parsed.pathname.endsWith("/buzzer.html") && roomFromBuzzer === roomCode;
-
-        if (parsed.protocol !== "https:" || !isSameOrigin || (!isShortJoin && !isDirectBuzzer)) {
+        const shortRoom = normalizeRoomCode(parsed.searchParams.get("r"));
+        const directRoom = normalizeRoomCode(parsed.searchParams.get("room"));
+        const validJoin = parsed.pathname.endsWith("/j.html") && shortRoom === roomCode;
+        const validDirect = parsed.pathname.endsWith("/buzzer.html") && directRoom === roomCode;
+        if (parsed.protocol !== "https:" || !isSameOrigin || (!validJoin && !validDirect)) {
           throw new Error("Invalid or mismatched buzzer QR URL");
         }
-        if (typeof window.qrcode !== "function") {
-          throw new Error("Local QR generator unavailable");
-        }
+        if (typeof window.qrcode !== "function") throw new Error("Local QR generator unavailable");
 
-        // Lowest practical density for screen scanning: the short same-origin URL,
-        // error correction L, integer modules, and a standards-compliant quiet zone.
+        // Render directly to a bitmap canvas at integer pixel boundaries.
+        // This avoids SVG/CSS interpolation and monitor moire that can prevent
+        // Android/iPhone cameras from recognizing an otherwise valid QR.
         const qr = window.qrcode(0, "L");
         qr.addData(finalUrl, "Byte");
         qr.make();
-        const moduleCount = qr.getModuleCount();
-        const quietModules = 4;
-        const cellSize = Math.max(10, Math.floor(360 / (moduleCount + quietModules * 2)));
-        const margin = quietModules * cellSize;
 
-        target.replaceChildren();
-        target.innerHTML = qr.createSvgTag({
-          cellSize,
-          margin,
-          scalable: true,
-          alt: "Scan to join the Black & Allies Jeopardy buzzer"
-        });
+        const modules = qr.getModuleCount();
+        const quiet = 4;
+        const scale = 14;
+        const totalModules = modules + quiet * 2;
+        const size = totalModules * scale;
 
-        const svg = target.querySelector("svg");
-        if (!svg) throw new Error("Local QR generator returned no SVG");
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "100%");
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        svg.setAttribute("aria-label", "Scan to join the buzzer");
-        svg.style.display = "block";
-        svg.style.background = "#fff";
-        svg.style.shapeRendering = "crispEdges";
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        canvas.setAttribute("aria-label", `Scan to join room ${roomCode}`);
+        const ctx = canvas.getContext("2d", { alpha:false });
+        if (!ctx) throw new Error("Canvas unavailable");
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = "#000000";
+        for (let row = 0; row < modules; row += 1) {
+          for (let col = 0; col < modules; col += 1) {
+            if (qr.isDark(row, col)) {
+              ctx.fillRect((col + quiet) * scale, (row + quiet) * scale, scale, scale);
+            }
+          }
+        }
 
+        target.replaceChildren(canvas);
         target.dataset.qrUrl = finalUrl;
-        target.dataset.qrModules = String(moduleCount);
+        target.dataset.qrModules = String(modules);
         target.setAttribute("title", `Scan to join room ${roomCode}`);
         return true;
       } catch (err) {
@@ -2480,10 +2482,7 @@
         target.replaceChildren();
         const fallback = document.createElement("div");
         fallback.textContent = "QR unavailable — use the join link above.";
-        fallback.style.color = "#111";
-        fallback.style.background = "#fff";
-        fallback.style.padding = "18px";
-        fallback.style.textAlign = "center";
+        fallback.style.cssText = "color:#111;background:#fff;padding:18px;text-align:center";
         target.appendChild(fallback);
         return false;
       }
