@@ -2464,11 +2464,9 @@
       try {
         const parsed = new URL(finalUrl);
         const isSameOrigin = parsed.origin === window.location.origin;
-        const shortRoom = normalizeRoomCode(parsed.searchParams.get("r"));
         const directRoom = normalizeRoomCode(parsed.searchParams.get("room"));
-        const validJoin = parsed.pathname.endsWith("/j.html") && shortRoom === roomCode;
         const validDirect = parsed.pathname.endsWith("/buzzer.html") && directRoom === roomCode;
-        if (parsed.protocol !== "https:" || !isSameOrigin || (!validJoin && !validDirect)) {
+        if (parsed.protocol !== "https:" || !isSameOrigin || !validDirect) {
           throw new Error("Invalid or mismatched buzzer QR URL");
         }
         if (typeof window.qrcode !== "function") throw new Error("Local QR generator unavailable");
@@ -2535,16 +2533,13 @@
       buzzerUrl.hash = "";
       buzzerUrl.searchParams.set("room", roomCode);
 
-      // The QR uses a deliberately short same-site join URL. Fewer encoded
-      // characters means fewer QR modules and larger camera-readable blocks.
-      const qrJoinUrl = new URL("j.html", window.location.href);
-      qrJoinUrl.search = "";
-      qrJoinUrl.hash = "";
-      qrJoinUrl.searchParams.set("r", roomCode);
+      // QR now points directly to the proven-working buzzer endpoint.
+      // No redirect/intermediate join page is involved.
+      const qrJoinUrl = new URL(buzzerUrl.href);
 
       // Guard against ever displaying a QR/link for a different room.
       if (normalizeRoomCode(buzzerUrl.searchParams.get("room")) !== roomCode ||
-          normalizeRoomCode(qrJoinUrl.searchParams.get("r")) !== roomCode) {
+          normalizeRoomCode(qrJoinUrl.searchParams.get("room")) !== roomCode) {
         console.error("Buzzer URL room mismatch");
         buzzStatusEl.textContent = "⚠️ QR room mismatch. Refresh the host page.";
         return;
@@ -2583,8 +2578,8 @@
 
     if(fullScreenQrBtn) fullScreenQrBtn.addEventListener("click", () => {
       if(!currentQrJoinUrl){
-        const u = new URL("j.html", window.location.href);
-        u.search = ""; u.hash = ""; u.searchParams.set("r", roomCode);
+        const u = new URL("buzzer.html", window.location.href);
+        u.search = ""; u.hash = ""; u.searchParams.set("room", roomCode);
         currentQrJoinUrl = u.href;
       }
       qrScanRoom.textContent = `Room: ${roomCode}`;
