@@ -602,6 +602,7 @@
   <div id="ticker"><div class="ticker-content"></div></div>
 
 
+  <script src="assets/qrcode.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
@@ -2411,32 +2412,38 @@
         if (parsed.protocol !== "https:" || !parsed.pathname.endsWith("/buzzer.html") || !parsed.searchParams.get("room")) {
           throw new Error("Invalid buzzer URL");
         }
+        if (typeof window.qrcode !== "function") {
+          throw new Error("Local QR generator unavailable");
+        }
+
+        // Generate locally: auto-select QR version, medium ECC, Byte mode.
+        // SVG uses crisp integer modules and a standards-sized 4-module quiet zone.
+        const qr = window.qrcode(0, "M");
+        qr.addData(finalUrl, "Byte");
+        qr.make();
+        target.innerHTML = qr.createSvgTag({
+          cellSize: 10,
+          margin: 40,
+          scalable: true,
+          alt: "Scan to join the Black & Allies Jeopardy buzzer"
+        });
+
+        const svg = target.querySelector("svg");
+        if (!svg) throw new Error("Local QR generator returned no SVG");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svg.style.display = "block";
+        svg.style.background = "#fff";
+        svg.style.shapeRendering = "crispEdges";
+
+        target.dataset.qrUrl = finalUrl;
+        return true;
       } catch (err) {
-        console.error("Buzzer QR URL rejected:", err);
+        console.error("Local QR render failed:", err);
+        target.textContent = "QR unavailable — use the join link above.";
         return false;
       }
-
-      // QRServer generates a standards-friendly, high-contrast QR.
-      // 512px source + ECC M + explicit quiet-zone margin improves camera compatibility.
-      const apiUrl =
-        `https://api.qrserver.com/v1/create-qr-code/?size=512x512&ecc=M&margin=24&format=png&color=000000&bgcolor=ffffff&data=${encodeURIComponent(finalUrl)}`;
-
-      const img = document.createElement("img");
-      img.alt = "QR code for buzzer page";
-      img.width = 512;
-      img.height = 512;
-      img.decoding = "async";
-      img.referrerPolicy = "no-referrer";
-      img.style.cssText = "display:block;width:100%;height:100%;object-fit:contain;background:#fff";
-      img.onerror = () => {
-        console.error("QR image failed to load.");
-        target.textContent = "QR unavailable — use the join link above.";
-      };
-      img.src = apiUrl;
-
-      target.replaceChildren(img);
-      target.dataset.qrUrl = finalUrl;
-      return true;
     }
 
 
