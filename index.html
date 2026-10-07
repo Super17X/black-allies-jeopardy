@@ -2163,9 +2163,27 @@
     const bc = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(BUZZER_CHANNEL) : null;
     const realtimeConfig = window.JEOPARDY_CONFIG || {};
     const realtimeEnabled = !!(realtimeConfig.supabaseUrl && realtimeConfig.supabaseAnonKey && window.supabase);
-    const roomParam = new URLSearchParams(location.search).get("room");
-    const roomCode = (roomParam || sessionStorage.getItem("jeopardy-room") || Math.random().toString(36).slice(2,8)).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8) || "GAME01";
-    sessionStorage.setItem("jeopardy-room", roomCode);
+    const ROOM_STORAGE_KEY = "jeopardy-room";
+    const normalizeRoomCode = value =>
+      String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+
+    function createRoomCode() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const bytes = new Uint8Array(6);
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+      }
+      return Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+    }
+
+    // One authoritative room ID for this host page.
+    // A ?room= value wins; otherwise reuse this tab's room or create exactly one.
+    const requestedRoom = normalizeRoomCode(new URLSearchParams(location.search).get("room"));
+    const storedRoom = normalizeRoomCode(sessionStorage.getItem(ROOM_STORAGE_KEY));
+    const roomCode = requestedRoom || storedRoom || createRoomCode();
+    sessionStorage.setItem(ROOM_STORAGE_KEY, roomCode);
     let realtimeChannel = null;
     let realtimeReady = false;
     let outboundQueue = [];
@@ -2449,8 +2467,25 @@
 
     // ---------- open buzzer panel ----------
     function openBuzzerPanel() {
+      const authoritativeRoom = normalizeRoomCode(sessionStorage.getItem(ROOM_STORAGE_KEY));
+      if (authoritativeRoom !== roomCode) {
+        console.error("Room synchronization mismatch", { roomCode, authoritativeRoom });
+        buzzStatusEl.textContent = "⚠️ Room synchronization error. Refresh the host page.";
+        return;
+      }
+
       const buzzerUrl = new URL("buzzer.html", window.location.href);
+      buzzerUrl.search = "";
+      buzzerUrl.hash = "";
       buzzerUrl.searchParams.set("room", roomCode);
+
+      // Guard against ever displaying a QR/link for a different room.
+      if (normalizeRoomCode(buzzerUrl.searchParams.get("room")) !== roomCode) {
+        console.error("Buzzer URL room mismatch");
+        buzzStatusEl.textContent = "⚠️ QR room mismatch. Refresh the host page.";
+        return;
+      }
+
       buzzerPanelEl.style.display = "block";
       buzzerRoomEl.textContent = `Room: ${roomCode}`;
       buzzerLinkEl.textContent = buzzerUrl.href;
