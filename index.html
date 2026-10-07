@@ -191,13 +191,16 @@
       margin-bottom:12px;width:100%;text-align:left;
     }
     #buzzerQr{
-      width:min(440px,88vw);aspect-ratio:1/1;
-      margin:14px auto;display:flex;align-items:center;justify-content:center;
+      width:max-content;height:max-content;max-width:92vw;
+      margin:18px auto;display:flex;align-items:center;justify-content:center;
       box-sizing:border-box;background:#fff;padding:0;
-      border:0;border-radius:0;overflow:hidden;
+      border:0;border-radius:0;overflow:visible;
+    }
+    #buzzerQr canvas{
+      display:block;background:#fff;
+      width:auto;height:auto;max-width:none;
       image-rendering:pixelated;
     }
-    #buzzerQr canvas{width:100%;height:100%;display:block;background:#fff;image-rendering:pixelated}
     #buzzerLink{cursor:pointer}
     #buzzerLog{
       max-height:120px;overflow-y:auto;margin-top:10px;
@@ -2450,7 +2453,7 @@
 
         const modules = qr.getModuleCount();
         const quiet = 4;
-        const scale = 14;
+        const scale = 10;
         const totalModules = modules + quiet * 2;
         const size = totalModules * scale;
 
