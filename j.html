@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Joining Black & Allies Jeopardy</title>
+</head>
+<body>
+<script>
+(() => {
+  const room = String(new URLSearchParams(location.search).get("r") || "")
+    .toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+  if (!room) {
+    document.body.textContent = "Invalid game QR code. Return to the host and scan the current QR.";
+    return;
+  }
+  location.replace("buzzer.html?room=" + encodeURIComponent(room));
+})();
+</script>
+</body>
+</html>
