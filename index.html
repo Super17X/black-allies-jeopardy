@@ -2474,13 +2474,22 @@
         return;
       }
 
+      // Keep the visible/clickable fallback on the full buzzer URL.
       const buzzerUrl = new URL("buzzer.html", window.location.href);
       buzzerUrl.search = "";
       buzzerUrl.hash = "";
       buzzerUrl.searchParams.set("room", roomCode);
 
+      // The QR uses a deliberately short same-site join URL. Fewer encoded
+      // characters means fewer QR modules and larger camera-readable blocks.
+      const qrJoinUrl = new URL("j.html", window.location.href);
+      qrJoinUrl.search = "";
+      qrJoinUrl.hash = "";
+      qrJoinUrl.searchParams.set("r", roomCode);
+
       // Guard against ever displaying a QR/link for a different room.
-      if (normalizeRoomCode(buzzerUrl.searchParams.get("room")) !== roomCode) {
+      if (normalizeRoomCode(buzzerUrl.searchParams.get("room")) !== roomCode ||
+          normalizeRoomCode(qrJoinUrl.searchParams.get("r")) !== roomCode) {
         console.error("Buzzer URL room mismatch");
         buzzStatusEl.textContent = "⚠️ QR room mismatch. Refresh the host page.";
         return;
@@ -2493,7 +2502,7 @@
       buzzerLinkEl.setAttribute("tabindex", "0");
       buzzerLinkEl.onclick = () => window.open(buzzerUrl.href, "_blank", "noopener,noreferrer");
       buzzerLinkEl.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") buzzerLinkEl.click(); };
-      renderQrCode(buzzerUrl.href);
+      renderQrCode(qrJoinUrl.href);
       if(!realtimeEnabled){
         buzzStatusEl.textContent = "⚠️ Online relay not configured. Add your Supabase URL and publishable/anon key to config.js.";
       } else if(!realtimeReady){
