@@ -2565,8 +2565,8 @@
     const originalOpenBuzzerPanel = openBuzzerPanel;
     openBuzzerPanel = function(){
       originalOpenBuzzerPanel();
-      const u = new URL("j.html", window.location.href);
-      u.search = ""; u.hash = ""; u.searchParams.set("r", roomCode);
+      const u = new URL("buzzer.html", window.location.href);
+      u.search = ""; u.hash = ""; u.searchParams.set("room", roomCode);
       currentQrJoinUrl = u.href;
     };
 
