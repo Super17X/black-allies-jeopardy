@@ -2210,6 +2210,9 @@
           realtimeReady = true;
           flushRealtimeQueue();
           buzzStatusEl.textContent = `🌐 Online room ${roomCode} ready`;
+        } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
+          realtimeReady = false;
+          buzzStatusEl.textContent = `⚠️ Online room ${roomCode} disconnected. Refresh the host page before players join.`;
         }
       });
     }
@@ -2427,21 +2430,33 @@
 
       try {
         const parsed = new URL(finalUrl);
-        if (parsed.protocol !== "https:" || !parsed.pathname.endsWith("/buzzer.html") || !parsed.searchParams.get("room")) {
-          throw new Error("Invalid buzzer URL");
+        const isSameOrigin = parsed.origin === window.location.origin;
+        const roomFromShortJoin = normalizeRoomCode(parsed.searchParams.get("r"));
+        const roomFromBuzzer = normalizeRoomCode(parsed.searchParams.get("room"));
+        const isShortJoin = parsed.pathname.endsWith("/j.html") && roomFromShortJoin === roomCode;
+        const isDirectBuzzer = parsed.pathname.endsWith("/buzzer.html") && roomFromBuzzer === roomCode;
+
+        if (parsed.protocol !== "https:" || !isSameOrigin || (!isShortJoin && !isDirectBuzzer)) {
+          throw new Error("Invalid or mismatched buzzer QR URL");
         }
         if (typeof window.qrcode !== "function") {
           throw new Error("Local QR generator unavailable");
         }
 
-        // Generate locally: auto-select QR version, medium ECC, Byte mode.
-        // SVG uses crisp integer modules and a standards-sized 4-module quiet zone.
-        const qr = window.qrcode(0, "M");
+        // Lowest practical density for screen scanning: the short same-origin URL,
+        // error correction L, integer modules, and a standards-compliant quiet zone.
+        const qr = window.qrcode(0, "L");
         qr.addData(finalUrl, "Byte");
         qr.make();
+        const moduleCount = qr.getModuleCount();
+        const quietModules = 4;
+        const cellSize = Math.max(10, Math.floor(360 / (moduleCount + quietModules * 2)));
+        const margin = quietModules * cellSize;
+
+        target.replaceChildren();
         target.innerHTML = qr.createSvgTag({
-          cellSize: 10,
-          margin: 40,
+          cellSize,
+          margin,
           scalable: true,
           alt: "Scan to join the Black & Allies Jeopardy buzzer"
         });
@@ -2451,19 +2466,28 @@
         svg.setAttribute("width", "100%");
         svg.setAttribute("height", "100%");
         svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svg.setAttribute("aria-label", "Scan to join the buzzer");
         svg.style.display = "block";
         svg.style.background = "#fff";
         svg.style.shapeRendering = "crispEdges";
 
         target.dataset.qrUrl = finalUrl;
+        target.dataset.qrModules = String(moduleCount);
+        target.setAttribute("title", `Scan to join room ${roomCode}`);
         return true;
       } catch (err) {
         console.error("Local QR render failed:", err);
-        target.textContent = "QR unavailable — use the join link above.";
+        target.replaceChildren();
+        const fallback = document.createElement("div");
+        fallback.textContent = "QR unavailable — use the join link above.";
+        fallback.style.color = "#111";
+        fallback.style.background = "#fff";
+        fallback.style.padding = "18px";
+        fallback.style.textAlign = "center";
+        target.appendChild(fallback);
         return false;
       }
     }
-
 
     // ---------- open buzzer panel ----------
     function openBuzzerPanel() {
