@@ -211,6 +211,21 @@
     #buzzerLog .bz-entry:last-child{border-bottom:none}
 
 
+    /* Full-screen QR scanner mode: removes surrounding visual noise for phone cameras. */
+    #qrScanOverlay{
+      position:fixed;inset:0;z-index:5000;background:#fff;
+      display:none;flex-direction:column;align-items:center;justify-content:center;
+      padding:24px;color:#000;text-align:center;
+    }
+    #qrScanOverlay.show{display:flex}
+    #qrScanOverlay h2{margin:0 0 8px;color:#000;font-size:clamp(1.5rem,4vw,2.4rem)}
+    #qrScanOverlay .scanRoom{font:700 1.15rem ui-monospace,monospace;margin-bottom:16px;color:#000}
+    #qrScanQr{background:#fff;display:flex;align-items:center;justify-content:center}
+    #qrScanQr canvas{display:block;background:#fff;width:auto;height:auto;max-width:min(82vw,82vh);max-height:min(82vw,82vh);image-rendering:pixelated}
+    #qrScanOverlay .scanActions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+    #qrScanOverlay button{font-size:1rem;padding:10px 16px}
+    #qrScanOverlay .scanHint{margin-top:10px;font-size:.9rem;color:#222}
+
     /* Buzz-in flash popup */
     #buzzFlashOverlay{
       position:fixed;inset:0;
@@ -288,10 +303,24 @@
     <div id="buzzerRoom" class="mono tiny" style="color:var(--gold2);margin-bottom:6px">Room: —</div>
     <div id="buzzerLink">—</div>
     <div id="buzzerQr" aria-label="QR code for buzzer page"></div>
+    <div class="row" style="justify-content:center;margin:10px 0 4px">
+      <button class="btn ok" id="fullScreenQrBtn">Full-Screen QR</button>
+      <button class="btn" id="testQrBtn">Test QR Link</button>
+    </div>
     <div id="buzzStatus" class="mono tiny" style="color:var(--gold2);min-height:1.2em;margin-top:6px"></div>
     <div id="buzzerLog"><em style="color:#443d20">No buzz-ins yet.</em></div>
     <div style="margin-top:14px" class="row" style="justify-content:center">
       <button class="btn warn" id="closeBuzzerPanelBtn">Close Panel</button>
+    </div>
+  </div>
+
+  <div id="qrScanOverlay" role="dialog" aria-modal="true" aria-label="Full-screen player QR code">
+    <h2>Scan to Join</h2>
+    <div id="qrScanRoom" class="scanRoom">Room: —</div>
+    <div id="qrScanQr"></div>
+    <div class="scanHint">Point your phone camera directly at the QR code.</div>
+    <div class="scanActions">
+      <button class="btn warn" id="closeFullScreenQrBtn">Close QR</button>
     </div>
   </div>
 
@@ -2427,9 +2456,9 @@
 
 
     // ---------- QR code generator ----------
-    function renderQrCode(url) {
+    function renderQrCode(url, targetId = "buzzerQr") {
       const finalUrl = String(url || "").trim();
-      const target = $("buzzerQr");
+      const target = $(targetId);
       if (!target || !finalUrl) return false;
 
       try {
@@ -2536,6 +2565,38 @@
       }
     }
 
+
+    let currentQrJoinUrl = "";
+    const originalOpenBuzzerPanel = openBuzzerPanel;
+    openBuzzerPanel = function(){
+      originalOpenBuzzerPanel();
+      const u = new URL("j.html", window.location.href);
+      u.search = ""; u.hash = ""; u.searchParams.set("r", roomCode);
+      currentQrJoinUrl = u.href;
+    };
+
+    const fullScreenQrBtn = $("fullScreenQrBtn");
+    const testQrBtn = $("testQrBtn");
+    const qrScanOverlay = $("qrScanOverlay");
+    const qrScanRoom = $("qrScanRoom");
+    const closeFullScreenQrBtn = $("closeFullScreenQrBtn");
+
+    if(fullScreenQrBtn) fullScreenQrBtn.addEventListener("click", () => {
+      if(!currentQrJoinUrl){
+        const u = new URL("j.html", window.location.href);
+        u.search = ""; u.hash = ""; u.searchParams.set("r", roomCode);
+        currentQrJoinUrl = u.href;
+      }
+      qrScanRoom.textContent = `Room: ${roomCode}`;
+      if(renderQrCode(currentQrJoinUrl, "qrScanQr")) qrScanOverlay.classList.add("show");
+    });
+    if(testQrBtn) testQrBtn.addEventListener("click", () => {
+      const url = currentQrJoinUrl || $("buzzerQr")?.dataset.qrUrl;
+      if(url) window.open(url, "_blank", "noopener,noreferrer");
+    });
+    if(closeFullScreenQrBtn) closeFullScreenQrBtn.addEventListener("click", () => qrScanOverlay.classList.remove("show"));
+    if(qrScanOverlay) qrScanOverlay.addEventListener("click", e => { if(e.target === qrScanOverlay) qrScanOverlay.classList.remove("show"); });
+    document.addEventListener("keydown", e => { if(e.key === "Escape" && qrScanOverlay?.classList.contains("show")) qrScanOverlay.classList.remove("show"); });
 
     if (showBuzzerPanelBtn) showBuzzerPanelBtn.addEventListener("click", openBuzzerPanel);
     if (buzzerLinkBtn)      buzzerLinkBtn.addEventListener("click", openBuzzerPanel);
